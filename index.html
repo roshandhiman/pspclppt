@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSPCL Training: Distribution Maintenance & Pole Climbing</title>
+    <style>
+        :root {
+            --pspcl-blue: #003366;
+            --pspcl-yellow: #FFCC00;
+            --pspcl-light-blue: #00509E;
+            --text-dark: #333333;
+            --text-light: #ffffff;
+            --bg-gray: #f4f7f6;
+            --danger: #d32f2f;
+            --success: #388e3c;
+            --warning-bg: #fff3e0;
+            --note-bg: #e8eaf6;
+            --border-radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-gray);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden; /* Prevent scrolling, slide based */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header / Nav --- */
+        header {
+            background-color: var(--pspcl-blue);
+            color: var(--text-light);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .brand-circle {
+            width: 40px;
+            height: 40px;
+            background-color: var(--pspcl-yellow);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--pspcl-blue);
+            font-weight: 900;
+        }
+
+        .controls-top {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-nav {
+            background-color: var(--pspcl-yellow);
+            color: var(--pspcl-blue);
+        }
+
+        .btn-nav:hover {
+            background-color: #e6b800;
+        }
+
+        .btn-toggle-notes {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .btn-toggle-notes:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+
+        /* --- Main Presentation Area --- */
+        main {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .slide-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Slide Layout Structure --- */
+        .slide-header {
+            background-color: var(--pspcl-blue);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slide-header h2 {
+            font-size: 1.4rem;
+        }
+
+        .slide-number {
+            background: var(--pspcl-yellow);
+            color: var(--pspcl-blue);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .slide-body {
+            flex: 1;
+            padding: 25px;
+            display: flex;
+            gap: 20px;
+            overflow-y: auto; /* Allow scrolling if content is long */
+        }
+
+        .content-col {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .visual-col {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- Content Elements --- */
+        h3 {
+            color: var(--pspcl-light-blue);
+            margin-bottom: 5px;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--pspcl-yellow);
+            display: inline-block;
+            padding-bottom: 2px;
+        }
+
+        p, li {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #444;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-box {
+            background-color: var(--note-bg);
+            border-left: 5px solid var(--pspcl-light-blue);
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background-color: #ffebee;
+            border-left: 5px solid var(--danger);
+            padding: 15px;
+            border-radius: 4px;
+            color: #b71c1c;
+        }
+
+        .safety-box {
+            background-color: #e8f5e9;
+            border: 2px solid var(--success);
+            padding: 15px;
+            border-radius: 4px;
+            color: #1b5e20;
+        }
+
+        .diagram-placeholder {
+            background-color: #eee;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #777;
+            text-align: center;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .diagram-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+
+        /* --- Trainer Notes Section --- */
+        .trainer-notes {
+            background-color: #263238;
+            color: #eceff1;
+            padding: 15px 25px;
+            border-top: 4px solid var(--pspcl-yellow);
+            font-size: 0.95rem;
+            display: none; /* Hidden by default */
+        }
+
+        .trainer-notes.show {
+            display: block;
+        }
+
+        .trainer-notes strong {
+            color: var(--pspcl-yellow);
+        }
+
+        .note-label {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+            color: #90a4ae;
+            font-size: 0.8rem;
+        }
+
+        /* --- CSS Diagrams (Technical Infographics) --- */
+        .flow-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .flow-step {
+            background: white;
+            border: 2px solid var(--pspcl-blue);
+            color: var(--pspcl-blue);
+            padding: 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            position: relative;
+            width: 80%;
+            text-align: center;
+        }
+        .arrow-down {
+            width: 0; 
+            height: 0; 
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid var(--pspcl-blue);
+        }
+
+        /* --- Table Styling --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        th {
+            background-color: var(--pspcl-blue);
+            color: white;
+        }
+
+        /* --- Footer Controls --- */
+        .footer-controls {
+            height: 50px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--pspcl-yellow);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide-body {
+                flex-direction: column;
+            }
+            .visual-col {
+                display: none; /* Hide visuals on mobile to save space */
+            }
+            .brand span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <div class="brand-circle">PSPCL</div>
+            <span>Training & Development</span>
+        </div>
+        <div class="controls-top">
+            <button class="btn-toggle-notes" onclick="toggleNotes()">👁 Show Trainer Notes</button>
+        </div>
+    </header>
+
+    <main id="presentation">
+        <div class="slide-container" id="slideContainer">
+            <!-- Slides will be injected here via JavaScript for cleaner file management in this output, 
+                 but to adhere to "Static HTML" request fully, I will write them out explicitly below. -->
+        </div>
+    </main>
+    
+    <div class="footer-controls">
+        <button class="btn-nav" onclick="prevSlide()">◀ Previous</button>
+        <span id="slideIndicator">1 / 35</span>
+        <button class="btn-nav" onclick="nextSlide()">Next ▶</button>
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <script>
+        // --- DATA & CONTENT ---
+        // This structure holds all slide content to keep the HTML clean and manageable.
+        const slidesData = [
+            {
+                title: "Cover Slide",
+                layout: "center",
+                content: `
+                    <div style="text-align:center; padding: 40px;">
+                        <h1 style="color:var(--pspcl-blue); font-size: 2.5rem; margin-bottom:20px;">Best Practices of Maintenance of<br>Distribution System</h1>
+                        <h2 style="color:var(--text-dark); margin-bottom:30px;">Ensuring Uninterrupted Power Supply + Pole Climbing (Practical)</h2>
+                        <div style="background:var(--pspcl-yellow); display:inline-block; padding:10px 20px; border-radius:5px; color:var(--pspcl-blue); font-weight:bold;">
+                            PSPCL Training Session
+                        </div>
+                        <p style="margin-top:20px; font-size:1.1rem;">Prepared for: JE / Linemen / Technical Staff</p>
+                    </div>
+                    <div class="diagram-placeholder">
+                        <img src="https://picsum.photos/seed/pspcl1/800/400" alt="Power Distribution Background">
+                    </div>
+                `,
+                trainer: "Welcome everyone. Aaj hum baat karenge distribution maintenance ki aur pole climbing ki. Is topic ka main maqsad hai ki hum kaise uninterrupted power supply de sakte hain aur kaise safe reh sakte hain. Please apna dhyan rakhein."
+            },
+            {
+                title: "Training Objectives",
+                content: `
+                    <h3>Is Training Se Kya Seekhengein?</h3>
+                    <ul>
+                        <li><strong>Uninterrupted Power Supply:</strong> Bijli ko rukna nahi chahiye, iske liye kya karna hai.</li>
+                        <li><strong>Safety First:</strong> Life zarrori hai. Kaise work karein taake koi accident na ho.</li>
+                        <li><strong>Preventive Maintenance:</strong> Problem aane se pehle hi use solve karna.</li>
+                        <li><strong>Pole Climbing Skills:</strong> Correct tarika aur safety gear ka istemal.</li>
+                        <li><strong>Consumer Satisfaction:</strong> Public ki complaint kum karna.</li>
+                    </ul>
+                    <div class="highlight-box">
+                        <strong>Goal:</strong> "Zero Accident" aur "Maximum Availability".
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/objectives/600/400" alt="Training Goals"></div>`,
+                trainer: "Sabse pehle humein samajhna hai ki hum yahan kyun hain. Sirf bijli chalana kaam nahi hai, bijli ko bina ruke chalana hai. Aur sabse zarrori, ghar wapas safe jaana hai."
+            },
+            {
+                title: "Introduction to Distribution System",
+                content: `
+                    <h3>Distribution System Kya Hai?</h3>
+                    <p> Woh system jo bijli ko Grid (Substation) se aam aadmi ke ghar tak pahunchata hai.</p>
+                    <ul>
+                        <li><strong>33kV/11kV Substation:</strong> Bijli yahan aati hai.</li>
+                        <li><strong>Feeders:</strong> Badi lines jo bijli le kar jati hain.</li>
+                        <li><strong>Distribution Transformer (DT):strong> Voltage kam karta hai (11kV se 440V/230V).</li>
+                        <li><strong>HT/LT Lines & Poles:</strong> Bijli behne ke raste.</li>
+                        <li><strong>Service Wire:</strong> Ghar tak ki last connection.</li>
+                    </ul>
+                `,
+                visual: `
+                    <div class="flow-chart">
+                        <div class="flow-step">Grid (220kV)</div>
+                        <div class="arrow-down"></div>
+                        <div class="flow-step">33kV/11kV Substation</div>
+                        <div class="arrow-down"></div>
+                        <div class="flow-step">Feeder Pillar / HT Line</div>
+                        <div class="arrow-down"></div>
+                        <div class="flow-step">Distribution Transformer</div>
+                        <div class="arrow-down"></div>
+                        <div class="flow-step">Consumer (LT)</div>
+                    </div>
+                `,
+                trainer: "Sochiye bijli paani ki tarah hai. Substation bada taalaab hai, feeder nehr hai, transformer pump hai, aur ghar ke wire nal hain. Agar kahi bhi leak ya rukawat hai, toh paani nahi milega (bijli kategi)."
+            },
+            {
+                title: "Importance of Maintenance",
+                content: `
+                    <h3>Kyun Maintenance Zaruri Hai?</h3>
+                    <p>Agar hum maintenance nahi karenge, toh system fail hoga.</p>
+                    <ul>
+                        <li><strong>Reliability:</strong> Transformer jalna ya wire tootna band karega.</li>
+                        <li><strong>Loss Reduction:</strong> Khatte joints se bijli ghatti hai (Technical loss).</li>
+                        <li><strong>Safety:</strong> Kahi se shock na lage.</li>
+                        <li><strong>Life Span:</strong> Equipment (Poles, DT) lambi chalegi.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/maintenance/600/400" alt="Maintenance Worker"></div>`,
+                trainer: "Jaise hum gadi ka oil change karte hain taaki engine kharab na ho, waise hi lines ki patrolling aur DT ka oil check karna zaruri hai. Prevention is better than cure."
+            },
+            {
+                title: "Types of Maintenance",
+                content: `
+                    <table>
+                        <tr><th>Type</th><th>Meaning</th><th>Example</th></tr>
+                        <tr>
+                            <td><strong>Preventive</strong></td>
+                            <td>Problem aane se pehle kaam karna.</td>
+                            <td>Tree trimming, Oil check.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Predictive</strong></td>
+                            <td>Machine ki kharab hone ki prediction.</td>
+                            <td>Thermography (garmi check).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Breakdown</strong></td>
+                            <td>Fault hone ke baad theek karna.</td>
+                            <td>Transformer jalne ko change karna.</td>
+                        </tr>
+                    </table>
+                    <div class="highlight-box">
+                        PSPCL Focus: <strong>Preventive Maintenance</strong> badhao, Breakdown kam karo.
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/types/600/400" alt="Maintenance Types"></div>`,
+                trainer: "Breakdown maintenance me public gusa hoti hai aur board ka loss hota hai. Hamein aisa karna hai ki fault hi na aaye. Isliye Preventive Maintenance sabse best hai."
+            },
+            {
+                title: "Preventive Maintenance Practices",
+                content: `
+                    <h3>Routine Kya Karna Chahiye?</h3>
+                    <ul>
+                        <li><strong>Line Patrolling:</strong> Roz ya hafte mein line dekhna.</li>
+                        <li><strong>Tightening Joints:</strong> Loose joints garam hote hain aur fuse katte hain.</li>
+                        <li><strong>Tree Trimming:</strong> Pedo ki dalon se door rakhna.</li>
+                        <li><strong>Insulator Cleaning:</strong> Dhul aur mitti saaf karna taake bijli leak na ho.</li>
+                        <li><strong>Oil Testing:</strong> Transformer oil ki quality check karna.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/inspect/600/400" alt="Inspection"></div>`,
+                trainer: "Choti choti cheezein badi ban jati hain. Ek chhota sa loose joint poori line ko trip kar sakta hai. Isliye use 'Tight' rakhna zaruri hai."
+            },
+            {
+                title: "Daily Line Patrolling",
+                content: `
+                    <h3>Patrolling Me Kya Dhyan Dein?</h3>
+                    <ul>
+                        <li><strong>Pole Condition:</strong> Kya kahaaput raha hai? (Rotten pole).</li>
+                        <li><strong>Insulators:</strong> Toot gaye ya crack hain?</li>
+                        <li><strong>Jumpers:</strong> Loose hain ya halki hain?</li>
+                        <li><strong>Sagging Conductor:</strong> Wire zyada neeche lag rahi hai? (Road ke upar se aasani se guzre).</li>
+                        <li><strong>Bird Nests:</strong> Chidiya ke ghosle hain to hatana hai.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/lines/600/400" alt="Power Lines"></div>`,
+                trainer: "Patrolling sirf chalna nahi hai, dekhna hai. Note book me likh ke lao kahan kya problem hai. Aankh ka maamla hai."
+            },
+            {
+                title: "Feeder Maintenance",
+                content: `
+                    <h3>11kV Feeder Ka Dhyan Rakhein</h3>
+                    <p>Feeder main line hai. Agar yeh rukti hai toh area andhera ho jata hai.</p>
+                    <ul>
+                        <li><strong>Hotspot Detection:</strong> Joints ko Thermography gun se check karo.</li>
+                        <li><strong>Protection Relay:</strong> Settings sahi hain?</li>
+                        <li><strong>Isolator & Switchgear:</strong> Proper operation check karo.</li>
+                        <li><strong>Tripping Analysis:</strong> Agar trip ho raha hai, kyun? Reason dhundo.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/feeder/600/400" alt="Feeder Pillar"></div>`,
+                trainer: "Feeder maintenance me risk zyada hota hai kyunki voltage high hai (11kV). Hamesha bina line clear kiye kaam na karein."
+            },
+            {
+                title: "Distribution Transformer Maintenance",
+                content: `
+                    <h3>DT (Transformers) Ki Suraksha</h3>
+                    <ul>
+                        <li><strong>Oil Level:</strong> Gauge me dekho. Oil kam hona chahiye nahi.</li>
+                        <li><strong>Breather:</strong> Silica gel pink ho gaya toh badalna hai (blue rehna chahiye).</li>
+                        <li><strong>Earthing:</strong> Transformer aur pole ki earthing test karo.</li>
+                        <li><strong>Bushings:</strong> Crack ya leakage nahi hona chahiye.</li>
+                        <li><strong>Temperature:</strong> Zyada garam ho raha hai toh load kam karo.</li>
+                        <li><strong>Noise:</strong> Awaz zyada ho toh internal fault ho sakta hai.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/transformer/600/400" alt="Transformer"></div>`,
+                trainer: "Transformer board ki dhadkan hai. Use thanda rakhna hai (Oil), saaf rakhna hai (Breather), aur zameen se juda rakhna hai (Earthing)."
+            },
+            {
+                title: "Transformer Failure Causes",
+                content: `
+                    <h3>Transformer Kyun Jalta Hai?</h3>
+                    <div class="warning-box">
+                        <strong>Common Reasons:</strong>
+                        <ul>
+                            <li>Overloading ( Zyada load )</li>
+                            <li>Poor Oil Quality (Moisture)</li>
+                            <li>Loose Connections (LT/HT Terminals)</li>
+                            <li>Low/Failed Earthing</li>
+                            <li>Lightning (Aag berasta)</li>
+                        </ul>
+                    </div>
+                    <p><strong>Prevention:</strong> Load balancing karo, oil filter karo, earthing tight karo.</p>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/burnt/600/400" alt="Burnt Equipment"></div>`,
+                trainer: "Jab transformer jalta hai toh 2-3 din ka supply band ho jata hai. Log gusa karte hain. Overloading se bachao."
+            },
+            {
+                title: "HT & LT Line Maintenance",
+                content: `
+                    <h3>High Tension (11kV) & Low Tension (440V)</h3>
+                    <ul>
+                        <li><strong>Conductor Sag:</strong> Wire na lade, tension maintain rakho.</li>
+                        <li><strong>Jumper Checking:</strong> ACSR wire ke joints tight hain.</li>
+                        <li><strong>Neutral Integrity:</strong> Neutral wire tootna tootana chahiye. (Dangerous for single phase loads).</li>
+                        <li><strong>Theft Detection:</strong> Katiya (Hooking) nahi honi chahiye.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/wire/600/400" alt="Wires on Pole"></div>`,
+                trainer: "HT line me sirf expert ko chadna chahiye. LT line me bhi dhyan rakho, kabhi bhi neutral aur phase confuse mat karna."
+            },
+            {
+                title: "Insulator Maintenance",
+                content: `
+                    <h3>Insulators (Porcelain/Disc)</h3>
+                    <p>Yeh bijli ko hold karte hain aur pole se alag rakhte hain.</p>
+                    <ul>
+                        <li><strong>Flashover:</strong> Dhul lagi ho toh bijli hawa mein ud jati hai.</li>
+                        <li><strong>Cracks:</strong> Toot gaya toh change karna hi padega.</li>
+                        <li><strong>Cleaning:</strong> Safai se leakage current kam hoti hai.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/insulator/600/400" alt="Insulators"></div>`,
+                trainer: "Gande insulator se bijli kachra karti hai. Halki si awaz (hissing) aati hai toh samajh lo insulator ganda hai."
+            },
+            {
+                title: "Tree Trimming & Vegetation",
+                content: `
+                    <h3>Ped (Trees) Se Bachao</h3>
+                    <p>Barish ke mausam me ped se line takarane se fault badh jate hain.</p>
+                    <ul>
+                        <li><strong>Clearance:</strong> Line se 2 meter door ped hona chahiye.</li>
+                        <li><strong>Seasonal Trimming:</strong> Monsoon se pehle kato.</li>
+                        <li><strong>Safe Cutting:</strong> Bina Line Clear kiye ped mat kato.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/tree/600/400" alt="Tree near line"></div>`,
+                trainer: "Hawa tez chalne se ped hilte hain aur line takrate hain. Ye tripping ka sabse bada karan hai. Jungle vibhag se coordination rakhein."
+            },
+            {
+                title: "Earthing System Maintenance",
+                content: `
+                    <h3>Earthing - Suraksha ka Kawach</h3>
+                    <p>Agar fault hoti hai, toh current zameen mein chali jati hai.</p>
+                    <ul>
+                        <li><strong>Earth Resistance:</strong> Zyaada nahi hona chahiye (1-2 Ohm ideal).</li>
+                        <li><strong>Neutral Earthing:</strong> DT ke neutral ko zameen se jodna.</li>
+                        <li><strong>Body Earthing:</strong> Transformer aur DB ki body.</li>
+                    </ul>
+                    <div class="safety-box">
+                        Good Earthing = Human Life Saved.
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/earth/600/400" alt="Earthing Pit"></div>`,
+                trainer: "Earthing weak hone par transformer phase fail kar sakta hai ya shock laga sakta hai. Earth tester se zarur check karein."
+            },
+            {
+                title: "Load Management",
+                content: `
+                    <h3>Load Balance Karna</h3>
+                    <p>Transformer pe R, Y, B teeno phase ka load barabar hona chahiye.</p>
+                    <ul>
+                        <li><strong>Phase Balancing:</strong> Agar Red phase pe load zyada hai, toh consumers ko Yellow phase shift karo.</li>
+                        <li><strong>Overloading:</strong> Transformer ki capacity se zyada load mat lo.</li>
+                        <li><strong>Voltage Profile:</strong> Load balance se voltage accha milta hai.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/load/600/400" alt="Load Graph"></div>`,
+                trainer: "Agar ek phase ka load 100A hai aur doosra ka 20A hai, toh transformer garam hoga aur voltage low hoga. Balance karo."
+            },
+            {
+                title: "Safety Practices (General)",
+                content: `
+                    <h3>Work Ka Matlab Safe Work</h3>
+                    <ul>
+                        <li><strong>PTW (Permit to Work):strong> Bina written permission kaam mat shuru karo.</li>
+                        <li><strong>Line Clear:</strong> Testing before touching.</li>
+                        <li><strong>Isolation:</strong> Source se band karo (Open the breaker).</li>
+                        <li><strong>Barricading:</strong> Kaam ke aas-paas latkao "Danger" ka patta.</li>
+                        <li><strong>Earth Rod:</strong> Work spot pe earthing lagana.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/sign/600/400" alt="Danger Sign"></div>`,
+                trainer: "SOP (Standard Operating Procedure) follow karo. 'Chalta hai' ki soch mat rakho. Pehla kaam hai apni jaan bachana."
+            },
+            {
+                title: "Personal Protective Equipment (PPE)",
+                content: `
+                    <h3>Apni Suraksha Apne Haath Mein</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="highlight-box"><strong>Helmet:</strong> Sir ki suraksha ke liye.</div>
+                        <div class="highlight-box"><strong>Gloves:</strong> Class 0/Class 1 rubber gloves (Insulated).</div>
+                        <div class="highlight-box"><strong>Safety Belt:</strong> Pole par chadne ke liye.</div>
+                        <div class="highlight-box"><strong>Safety Shoes:</strong> Rubber sole joota.</div>
+                        <div class="highlight-box"><strong>Reflective Jacket:</strong> Raat me dikhne ke liye.</div>
+                        <div class="highlight-box"><strong>Goggles:</strong> Aankhon ki suraksha.</div>
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/ppe/600/400" alt="Safety Gear"></div>`,
+                trainer: "PPE pehnna style nahi, zarruri hai. Belt check karo pehle chadne se. Gloves me puncture nahi hona chahiye."
+            },
+            {
+                title: "Common Causes of Power Interruption",
+                content: `
+                    <h3>Bijli Kyun Kati Hai?</h3>
+                    <ul>
+                        <li><strong>Vegetation:</strong> Pedon ki wajah se short circuit.</li>
+                        <li><strong>Transformer Fault:</strong> Failure or Overload.</li>
+                        <li><strong>Jumper Failure:</strong> Joints tootna.</li>
+                        <li><strong>Animals:</strong> Billi, bandar ya kabootar switchgear pe chadna.</li>
+                        <li><strong>Weather:</strong> Toofan, barf (Snow), badal.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/storm/600/400" alt="Storm"></div>`,
+                trainer: "Fault analyze karna seekho. Agar trip hui, toh wahan jao aur dekho kya hua. Agar wajah pata chal gayi, next baar prevent kar sakte ho."
+            },
+            {
+                title: "Role of JE & Technical Staff",
+                content: `
+                    <h3>JE (Junior Engineer) Ki Zimmedari</h3>
+                    <ul>
+                        <li><strong>Supervision:</strong> Linemen ko guide karna.</li>
+                        <li><strong>Safety Compliance:</strong> PPE pehenna ensure karna.</li>
+                        <li><strong>Planning:</strong> Maintenance ka schedule banana.</li>
+                        <li><strong>Complaint Redressal:</strong> Public ki problems solve karna.</li>
+                        <li><strong>Material Management:</strong> Wire, fuse, insulator ka hisab rakhna.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/eng/600/400" alt="Engineer"></div>`,
+                trainer: "JE sirf nigrani nahi karta, usse maloom hona chahiye field ka kaam. Agar team safe kaam karti hai toh uska credit JE ko jata hai."
+            },
+            {
+                title: "Record Keeping & Documentation",
+                content: `
+                    <h3>Likh Ke Rakho</h3>
+                    <ul>
+                        <li><strong>Maintenance Register:</strong> Kitne patrole kiye?</li>
+                        <li><strong>Breakdown Records:</strong> Fault kyu aaya?</li>
+                        <li><strong>Transformer History:</strong> Kab change hua, kab oil bhara.</li>
+                        <li><strong>Complaint Log:</strong> Time of complaint vs Time of restoration.</li>
+                    </ul>
+                    <div class="highlight-box">
+                        Agar likha nahi, toh kaam nahi hua.
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/record/600/400" alt="Register"></div>`,
+                trainer: "Data analysis se hume pata chalta hai kaun si line sabse zyada kharab hoti hai. Registers bharo."
+            },
+            {
+                title: "Modern Technologies",
+                content: `
+                    <h3>Naye Zamane Ki Maintenance</h3>
+                    <ul>
+                        <li><strong>Thermography:</strong> Garam joints ko bina chuye dekho (Camera gun).</li>
+                        <li><strong>Drones:</strong> Patrolling ke liye hawa se dekho.</li>
+                        <li><strong>Smart Metering:</strong> Load aur theft ka data.</li>
+                        <li><strong>SCADA:</strong> Control room se tripping ka pata.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/drone/600/400" alt="Drone"></div>`,
+                trainer: "Technology ka fayda uthao. Thermal gun se 2 minute me poora feeder check ho jata hai."
+            },
+            {
+                title: "Consumer Awareness",
+                content: `
+                    <h3>Janta Ko Jagruk Karo</h3>
+                    <ul>
+                        <li><strong>Illegal Hooking (Katiya):strong> Ye bahut khatarnak hai.</li>
+                        <li><strong>Fault Reporting:</strong> 1912 ya helpline number batana.</li>
+                        <li><strong>Safety:</strong> Ghar ke andar proper wiring use karein.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/people/600/400" alt="Consumers"></div>`,
+                trainer: "Kabhi-kabhi consumers hi fault karte hain. Unhe samjhao ki safe wiring unke hi bacchon ke liye hai."
+            },
+            {
+                title: "Emergency Handling",
+                content: `
+                    <h3>Fault Time Me Kya Karein?</h3>
+                    <div class="flow-chart">
+                        <div class="flow-step">1. Isolate the Line (Switch off)</div>
+                        <div class="arrow-down"></div>
+                        <div class="flow-step">2. Secure the Area (Barricade)</div>
+                        <div class="arrow-down"></div>
+                        <div class="flow-step">3. Identify Fault (Patrolling)</div>
+                        <div class="arrow-down"></div>
+                        <div class="flow-step">4. Repair with PPE</div>
+                        <div class="arrow-down"></div>
+                        <div class="flow-step">5. Restore Supply</div>
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/repair/600/400" alt="Emergency Repair"></div>`,
+                trainer: "Bhagane mat, soch ke kaam karo. Pehla kaam hai line ko off karna taaki aur log safe rahein."
+            },
+            {
+                title: "Monsoon Preparedness",
+                content: `
+                    <h3>Barish Se Pehle Tyari</h3>
+                    <ul>
+                        <li><strong>Pole Foundation:</strong> Mitti ghusne se pole dhila na ho.</li>
+                        <li><strong>Stay Wire:</strong> Tight karo taake pole na jhuke.</li>
+                        <li><strong>Drainage:</strong> DT platfrom se paani nikalne ka raasta.</li>
+                        <li><strong>Loose Joints:</strong> Pehle hi tight kar lo.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/rain/600/400" alt="Rainy Day"></div>`,
+                trainer: "Punjab me barish me faults badh jate hain. June month se pehle poora area check kar lo."
+            },
+            {
+                title: "Summer Load Management",
+                content: `
+                    <h3>Garmi Me Transformer Ko Bachao</h3>
+                    <ul>
+                        <li><strong>Peak Demand:</strong> AC aur Cooler chalne se load badh jata hai.</li>
+                        <li><strong>Temperature Check:</strong> Dobara dubara dekho.</li>
+                        <li><strong>Fuse Condition:</strong> Heat me fuse jal sakte hain.</li>
+                        <li><strong>Water Cooling:</strong> Kitne log DT paani se dhalte hain? Ye dangerous hai, lekin practical. Sahi tarika se karo.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/summer/600/400" alt="Sun"></div>`,
+                trainer: "Garmi me transformer 'bech-main' (dying) state me hota hai. Load shedding se behtar hai ki load manage karke transformer bachaya jaye."
+            },
+            {
+                title: "Pole Climbing: Introduction",
+                content: `
+                    <h3>Pole Climbing (Khamba Chadhna)</h3>
+                    <p>Yeh ek art hai aur bahut zarrori skill hai.</p>
+                    <ul>
+                        <li><strong>Application:</strong> Repair, Patrolling, Installation.</li>
+                        <li><strong>Risk:</strong> Girne se injury ya maut.</li>
+                        <li><strong>Requirement:</strong> Physical fitness, training, confidence.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/climb1/600/400" alt="Pole"></div>`,
+                trainer: "Pole climbing sirf taqat ka kaam nahi hai, technique ka kaam hai. Agar technique galat hai, toh taakat bhi kaam nahi aayegi."
+            },
+            {
+                title: "Pole Climbing Equipment",
+                content: `
+                    <h3>Samaan (Tools) Check Karo</h3>
+                    <ul>
+                        <li><strong>Safety Belt (Gautha):strong> Dual hook wala belt. Dam kharab nahi hona chahiye.</li>
+                        <li><strong>Climbers (Spurs):strong> Paon me lagane wale iron hooks. Teekhe hona chahiye.</li>
+                        <li><strong>Helmet:</strong> Sir pehna rahe.</li>
+                        <li><strong>Rope:</strong> Tools chadhane ke liye.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/belt/600/400" alt="Safety Belt"></div>`,
+                trainer: "Belt apni jaan bachane wali hai. Uski 'webbing' (patti) dekho, kati to nahi? Buckle sahi se lock hota hai? Check karo."
+            },
+            {
+                title: "Pre-Climbing Safety Check",
+                content: `
+                    <h3>Chadne Se Pehle</h3>
+                    <ul>
+                        <li><strong>Pole Condition:</strong> Kya pole gila hai? Kya kahaaput raha hai?</li>
+                        <li><strong>Bee/Snakes:</strong> Top par dekho, bee hive to nahi?</li>
+                        <li><strong>Weather:</strong> Tez hawa ya barish me mat chadho.</li>
+                        <li><strong>Health:</strong> Agar tabiyat kharab hai, mat chadho.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/check/600/400" alt="Checking Pole"></div>`,
+                trainer: "Gile pole se mat chadho, hath slip kar jayega. Hamesha dry pole hi chadho."
+            },
+            {
+                title: "Safe Pole Climbing Procedure",
+                content: `
+                    <h3>Step-by-Step Tarika</h3>
+                    <ol>
+                        <li><strong>PPE Pehno:</strong> Belt tight karo.</li>
+                        <li><strong>Grip:</strong> Haath aur paon ko pole par properly lagao.</li>
+                        <li><strong>3-Point Contact:</strong> Hamesha 3 (do paon, ek haath ya do haath, ek paon) contact pole ke sath rahe.</li>
+                        <li><strong>Belt Locking:</strong> Jab tak oopar nahi pahunch jaate, belt ko continue lock karte raho.</li>
+                        <li><strong>Slow:</strong> Bhaag mat, aaram se chadho.</li>
+                    </ol>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/climb2/600/400" alt="Climbing"></div>`,
+                trainer: "3-point rule yaad rakho. Agar aap ek hi paon par khade ho kar haath hilaoge, toh gir sakte ho."
+            },
+            {
+                title: "Safety During Work on Pole",
+                content: `
+                    <h3>Upar Kaam Karte Waqt</h3>
+                    <ul>
+                        <li><strong>Belt Hooking:</strong> Kaam shuru karne se pehle belt hook lock kar do.</li>
+                        <li><strong>Tool Handling:</strong> Tools haath me nahi, belt ya rope se bandh kar rakhna.</li>
+                        <li><strong>Live Line Distance:</strong> Wire se door rehno (Minimum Approach Distance).</li>
+                        <li><strong>Communication:</strong> Neeche wale se baat karte raho.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/work/600/400" alt="Working on Pole"></div>`,
+                trainer: "Kaam shuru karne se pehle belt belt laga do. 'Ek haath se kaam, ek haath se pakarna' - ye dangerous hai."
+            },
+            {
+                title: "Common Pole Climbing Mistakes",
+                content: `
+                    <h3>Galtiyan Mat Karo</h3>
+                    <ul>
+                        <li>Bina Belt ke chadhna.</li>
+                        <li>Pole par jhatke se utarna (Slide).</li>
+                        <li>Haath mein tools lekar chadhna.</li>
+                        <li>Gile pole par chadhna.</li>
+                        <li>Overconfidence (Main expert hoon).</li>
+                    </ul>
+                    <div class="warning-box">
+                        <strong>Note:</strong> Galti sirf ek baar milti hai.
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/fall/600/400" alt="Warning"></div>`,
+                trainer: "Kabhi bhi senior hokar bhi casual mat bano. Accident sirf naye logon ke sath nahi hota, experts ke sath bhi hota hai agar dhyan nahi diya."
+            },
+            {
+                title: "Accident Prevention",
+                content: `
+                    <h3>Zero Accident Target</h3>
+                    <ul>
+                        <li><strong>SOP Follow:</strong> Rules todna mana hai.</li>
+                        <li><strong>Team Work:</strong> Ek dusre ka dhyan rakho.</li>
+                        <li><strong>Tool Box Talk:</strong> Kaam shuru karne se pehle 5 minute safety ki baat karo.</li>
+                        <li><strong>Fitness:</strong> Sharir thak jaye toh rest lo.</li>
+                    </ul>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/team/600/400" alt="Team Meeting"></div>`,
+                trainer: "Tool box talk bahut important hai. Roj subah 10 minute: 'Aaj kya kaam hai, khatra kya hai' - yeh discuss karo."
+            },
+            {
+                title: "Case Studies",
+                content: `
+                    <h3>Real Life Examples</h3>
+                    <div class="highlight-box">
+                        <strong>Case 1: Transformer Burnout</strong><br>
+                        Cause: Overloading + Loose Neutral.<br>
+                        Solution: Load balancing + Earthing check.
+                    </div>
+                    <div class="highlight-box" style="margin-top:10px;">
+                        <strong>Case 2: Lineman Fall</strong><br>
+                        Cause: Belt hook nahi lagaya tha.<br>
+                        Prevention: Strict checking by JE.
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/case/600/400" alt="Case Study"></div>`,
+                trainer: "Doosron ki galtiyon se seekho. Yeh case studies real hain PSPCL me hue. Inhe repeat mat karna."
+            },
+            {
+                title: "Best Practices Summary",
+                content: `
+                    <table>
+                        <tr><th>Area</th><th>Best Practice</th></tr>
+                        <tr><td>Maintenance</td><td>Preventive > Breakdown</td></tr>
+                        <tr><td>Safety</td><td>PPE 100% use</td></tr>
+                        <tr><td>Operation</td><td>Line Clear Certificate zaroori</td></tr>
+                        <tr><td>Climbing</td><td>Belt first, Work second</td></tr>
+                    </table>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/summary/600/400" alt="Summary"></div>`,
+                trainer: "Yeh summary apne mobile me save kar lo aur hamesha yaad rakho."
+            },
+            {
+                title: "Conclusion",
+                content: `
+                    <div style="text-align:center; padding:20px;">
+                        <h2 style="color:var(--pspcl-blue);">Safety First, Service Always.</h2>
+                        <p style="font-size:1.2rem; margin-top:20px;">
+                            Hum PSPCL ke hain. Humari zimmedari hai ki har ghar tak bijli pahuche aur har ghar wapas wo lineman safe laute.
+                        </p>
+                        <p style="margin-top:20px;">
+                            "Kaam bada, Lakshya bada, lekin Suraksha Sabse Bada."
+                        </p>
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/hands/600/400" alt="Hands together"></div>`,
+                trainer: "Aapka samay diya, sunne ke liye dhanyavaad. Apne team ko bhi yeh baatein sikhana."
+            },
+            {
+                title: "Question & Answer",
+                content: `
+                    <div style="text-align:center; padding:40px;">
+                        <h1 style="font-size:3rem;">Thank You!</h1>
+                        <h3 style="color:var(--pspcl-light-blue);">Any Questions?</h3>
+                        <p style="margin-top:30px;">
+                            PSPCL Zindabad<br>
+                            Punjab Power Zindabad
+                        </p>
+                    </div>
+                `,
+                visual: `<div class="diagram-placeholder"><img src="https://picsum.photos/seed/qa/600/400" alt="Question Mark"></div>`,
+                trainer: "Ab aap puch sakte hain jo bhi doubt hai. Field se judi koi bhi sawal."
+            }
+        ];
+
+        // --- RENDER LOGIC ---
+        const container = document.getElementById('slideContainer');
+        const progressBar = document.getElementById('progressBar');
+        const indicator = document.getElementById('slideIndicator');
+        let currentSlide = 0;
+
+        function init() {
+            slidesData.forEach((slide, index) => {
+                const slideEl = document.createElement('article');
+                slideEl.className = `slide ${index === 0 ? 'active' : ''}`;
+                slideEl.id = `slide-${index}`;
+                
+                // Determine layout based on data
+                let visualHTML = slide.visual ? `<div class="visual-col">${slide.visual}</div>` : '';
+                
+                slideEl.innerHTML = `
+                    <div class="slide-header">
+                        <h2>${slide.title}</h2>
+                        <span class="slide-number">${index + 1}</span>
+                    </div>
+                    <div class="slide-body">
+                        <div class="content-col">
+                            ${slide.content}
+                        </div>
+                        ${visualHTML}
+                    </div>
+                    <div class="trainer-notes">
+                        <span class="note-label">TRAINER SPEAKING NOTES (Punjabi + English):</span>
+                        <p>${slide.trainer}</p>
+                    </div>
+                `;
+                container.appendChild(slideEl);
+            });
+            updateProgress();
+        }
+
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            if (index >= slides.length) currentSlide = 0;
+            else if (index < 0) currentSlide = slides.length - 1;
+            else currentSlide = index;
+
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                if (i === currentSlide) slide.classList.add('active');
+            });
+            updateProgress();
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        function updateProgress() {
+            const percent = ((currentSlide + 1) / slidesData.length) * 100;
+            progressBar.style.width = `${percent}%`;
+            indicator.innerText = `${currentSlide + 1} / ${slidesData.length}`;
+        }
+
+        function toggleNotes() {
+            const notes = document.querySelectorAll('.trainer-notes');
+            const btn = document.querySelector('.btn-toggle-notes');
+            notes.forEach(note => {
+                if (note.classList.contains('show')) {
+                    note.classList.remove('show');
+                    btn.innerText = "👁 Show Trainer Notes";
+                } else {
+                    note.classList.add('show');
+                    btn.innerText = "🚫 Hide Trainer Notes";
+                }
+            });
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+            if (e.key === 't' || e.key === 'T') toggleNotes();
+        });
+
+        // Initialize
+        init();
+
+    </script>
+</body>
+</html>
